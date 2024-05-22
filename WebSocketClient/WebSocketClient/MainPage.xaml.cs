@@ -17,45 +17,48 @@ namespace WebSocketClient
         private DataWriter messageWriter;
 
         private UdpClient udpClient;
+        private bool isWebSocketConnecting = false;
 
         public MainPage()
         {
             this.InitializeComponent();
-            StartListening(OnReceivedHostInfo: (ip) => { 
-                StartWebSocket(ip);
+            StartListening(OnReceivedWebSocketUri: (webSocketUri) =>
+            {
+                StartWebSocket(webSocketUri);
             });
         }
 
-        private async void StartListening(Action<string> OnReceivedHostInfo)
+        private async void StartListening(Action<string> OnReceivedWebSocketUri)
         {
             try
             {
                 udpClient = new UdpClient(8888);
                 udpClient.EnableBroadcast = true;
 
-                string serverIp = "";
-
                 while (true)
                 {
                     var result = await udpClient.ReceiveAsync();
                     string message = System.Text.Encoding.UTF8.GetString(result.Buffer);
 
-                    if (message.Contains("CONNECT_REQUEST"))
+                    if (message.StartsWith("ws://"))
                     {
-                        serverIp = result.RemoteEndPoint.Address.ToString();
-
-                        // 受信したサーバーのIPアドレスをUIに表示
-                        await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                        if (!isWebSocketConnecting)
                         {
-                            Debug.WriteLine($"Server IP Address: {serverIp}");
-                        });
+                            isWebSocketConnecting = true;
+
+                            string serverIp = result.RemoteEndPoint.Address.ToString();
+
+                            // 受信したサーバーのIPアドレスをUIに表示
+                            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                            {
+                                Debug.WriteLine($"Server IP Address: {serverIp}");
+                            });
+
+                            OnReceivedWebSocketUri?.Invoke(message);
+                        }
                     }
 
-                    if (serverIp != "")
-                    {
-                        OnReceivedHostInfo?.Invoke(serverIp);
-                        break;
-                    }
+                    break;
                 }
             }
             catch (Exception ex)
@@ -64,7 +67,7 @@ namespace WebSocketClient
             }
         }
 
-        private async void StartWebSocket(string ip)
+        private async void StartWebSocket(string webSocketUri)
         {
             try
             {
@@ -72,25 +75,28 @@ namespace WebSocketClient
                 messageWebSocket.Control.MessageType = SocketMessageType.Utf8;
                 messageWebSocket.MessageReceived += MessageWebSocket_MessageReceived;
 
-                Uri serverUri = new Uri($"ws://{ip}:8080/ws");
+                Uri serverUri = new Uri(webSocketUri);
                 await messageWebSocket.ConnectAsync(serverUri);
 
                 messageWriter = new DataWriter(messageWebSocket.OutputStream);
 
                 // メッセージを送信
                 await SendMessage("Hello, Server!");
-
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("WebSocket error: " + ex.Message);
+                isWebSocketConnecting = false; // エラーが発生した場合、再接続を許可するためにフラグをリセット
             }
         }
 
         private async Task SendMessage(string message)
         {
-            messageWriter.WriteString(message);
-            await messageWriter.StoreAsync();
+            if (messageWriter != null)
+            {
+                messageWriter.WriteString(message);
+                await messageWriter.StoreAsync();
+            }
         }
 
         private async void MessageWebSocket_MessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
@@ -110,6 +116,8 @@ namespace WebSocketClient
         {
             messageWebSocket?.Dispose();
             messageWebSocket = null;
+            messageWriter?.Dispose();
+            messageWriter = null;
         }
     }
 }

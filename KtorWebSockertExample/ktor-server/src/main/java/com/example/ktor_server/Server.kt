@@ -58,7 +58,9 @@ class Server {
             }
         }.start(wait = false)    //  メインスレッドをブロックしないようにする
 
-        startBroadcasting(ipAddress, 2000)
+        val message = "ws://${ipAddress}:8080/ws" // ブロードキャストするWebSocketのURI
+
+        startBroadcasting(message, 2000)
     }
 
     fun stop() {
@@ -77,10 +79,9 @@ class Server {
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    private fun startBroadcasting(ipAddress: String, sendDelay: Long) {
+    private fun startBroadcasting(message: String, sendDelay: Long) {
         val broadcastAddress = "255.255.255.255"
         val port = 8888
-        val message = "SERVER_IP: $ipAddress"
 
         broadcastJob = GlobalScope.launch(Dispatchers.IO) {
             DatagramSocket().use { socket ->
