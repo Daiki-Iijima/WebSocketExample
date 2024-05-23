@@ -1,7 +1,10 @@
-package com.example.ktorwebsockertexample
+package com.example.ktorwebsockertexample.connect_screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -10,9 +13,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.destinations.ConnectingDialogDestination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.spec.DestinationStyle
 
+@Destination<RootGraph>(start = true)
 @Composable
-fun IpInputScreen() {
+fun IpInputScreen(navigator: DestinationsNavigator?, modifier: Modifier = Modifier) {
 
     var ipStr by remember {
         mutableStateOf("")
@@ -34,10 +44,11 @@ fun IpInputScreen() {
         mutableStateOf(false)
     }
 
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(vertical = 10.dp),
     ) {
@@ -101,35 +112,62 @@ fun IpInputScreen() {
         }
 
         Button(onClick = {
-            //  ポップアップ表示
+            //  TODO : 入力のバリデートは必要
+
+            navigator?.navigate(ConnectingDialogDestination)
         }) {
             Text(text = "接続開始")
+        }
+
+    }
+}
+
+object NonDismissibleDialog : DestinationStyle.Dialog() {
+    override val properties = DialogProperties(
+        dismissOnClickOutside = false,
+        dismissOnBackPress = false,
+    )
+}
+
+@Destination<RootGraph>(style = NonDismissibleDialog::class)
+@Composable
+fun ConnectingDialog(navigator: DestinationsNavigator?) {
+    Card(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "アプリ起動中", style = MaterialTheme.typography.headlineLarge)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("アプリの起動中です。\nしばらくお待ち下さい")
+            Spacer(modifier = Modifier.height(16.dp))
+            CircularProgressIndicator() // 処理中のくるくる
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { navigator?.navigateUp() },
+                modifier = Modifier.fillMaxWidth().height(50.dp).padding(horizontal = 16.dp)
+            ) {
+                Text(text = "キャンセル")
+            }
         }
     }
 }
 
-@Composable
-fun ConnectingPopup() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(
-                vertical = 10.dp
-            )
-    ) {
-        Text(text = "接続中")
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
 fun InputScreenPreview() {
-    IpInputScreen()
+    IpInputScreen(null)
 }
 
 @Preview(showBackground = true)
 @Composable
-fun ConnectingPopupPreview() {
-    ConnectingPopup()
+fun ConnectingDialogPreview() {
+    ConnectingDialog(navigator = null)
 }

@@ -24,6 +24,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.ktor_server.Server
 import com.example.ktorwebsockertexample.ui.theme.KtorWebSockertExampleTheme
+import com.ramcosta.composedestinations.DestinationsNavHost
+import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.NavGraphs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.net.InetAddress
@@ -45,8 +48,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-//                    ServerControlScreen(server = server, ip = ip)
-                    IpInputScreen()
+                    DestinationsNavHost(navGraph = NavGraphs.root)
                 }
             }
         }
