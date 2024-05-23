@@ -45,12 +45,12 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ServerControlScreen(server = server, ip = ip)
+//                    ServerControlScreen(server = server, ip = ip)
+                    IpInputScreen()
                 }
             }
         }
     }
-
 }
 
 @Composable
