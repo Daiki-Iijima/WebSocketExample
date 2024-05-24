@@ -1,5 +1,6 @@
 package com.example.ktorwebsockertexample.connect_screen
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.example.ktor_server.NetworkModule
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.ConnectingDialogDestination
@@ -113,6 +115,13 @@ fun IpInputScreen(navigator: DestinationsNavigator?, modifier: Modifier = Modifi
 
         Button(onClick = {
             //  TODO : 入力のバリデートは必要
+            val response = NetworkModule.handleStartAppRequest(
+                ipStr,
+                userStr,
+                passwordStr,
+                appNameStr,
+                ::sendProgress
+            )
 
             navigator?.navigate(ConnectingDialogDestination)
         }) {
@@ -127,6 +136,10 @@ object NonDismissibleDialog : DestinationStyle.Dialog() {
         dismissOnClickOutside = false,
         dismissOnBackPress = false,
     )
+}
+
+private suspend fun sendProgress(message: String) {
+    Log.d("ServerProgress", message)
 }
 
 @Destination<RootGraph>(style = NonDismissibleDialog::class)
@@ -151,7 +164,10 @@ fun ConnectingDialog(navigator: DestinationsNavigator?) {
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = { navigator?.navigateUp() },
-                modifier = Modifier.fillMaxWidth().height(50.dp).padding(horizontal = 16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .padding(horizontal = 16.dp)
             ) {
                 Text(text = "キャンセル")
             }
